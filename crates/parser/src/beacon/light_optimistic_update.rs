@@ -1,6 +1,6 @@
 use alloy_primitives::{B256, U64};
 
-use crate::{find_field, hex_to_b256, hex_to_u64};
+use crate::{find_field, hex_to_b256, hex_to_u64, types::Beacon};
 
 #[derive(Debug, Default, Clone)]
 pub struct LightOptimisticUpdate {
@@ -11,22 +11,11 @@ pub struct LightOptimisticUpdate {
     pub code: Option<u16>,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct Beacon {
-    pub slot: U64,
-    pub proposer_index: U64,
-    pub parent_root: B256,
-    pub state_root: B256,
-    pub body_root: B256,
-}
-
 #[derive(Debug, Default, Clone, Copy)]
 pub struct SyncAggregate {
     pub sync_committee_bits: U64,
     pub sync_committee_signature: B256,
 }
-
-
 
 impl LightOptimisticUpdate {
     pub fn parse(input: &[u8]) -> Option<Self> {
@@ -56,12 +45,7 @@ impl LightOptimisticUpdate {
             ),
         };
 
-
-        let signature_slot = find_field(
-            &input,
-            b"\"signature_slot\":\"",
-            b"\"",
-        )?;
+        let signature_slot = find_field(&input, b"\"signature_slot\":\"", b"\"")?;
 
         let beacon = Beacon {
             slot: std::str::from_utf8(&input[slot.0..slot.1])
@@ -77,14 +61,14 @@ impl LightOptimisticUpdate {
             body_root: hex_to_b256(&input[body_root.0..body_root.1]),
         };
 
-
         Some(LightOptimisticUpdate {
-            version: std::str::from_utf8(&input[version.0..version.1]).ok()?.to_string(),
+            version: std::str::from_utf8(&input[version.0..version.1])
+                .ok()?
+                .to_string(),
             attested_header: beacon,
             sync_aggregate,
             signature_slot: hex_to_u64(&input[signature_slot.0..signature_slot.1]),
             code: None,
-        
         })
     }
 

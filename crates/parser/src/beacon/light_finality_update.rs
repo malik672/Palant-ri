@@ -1,8 +1,8 @@
 use core::{str, sync};
 
+use crate::{find_field, hex_to_b256, hex_to_u64, types::Beacon};
 use alloy_primitives::{B256, U64};
-use mordor::{DEFAULT_GENESIS_TIMESTAMP, SlotSynchronizer};
-use crate::{find_field, hex_to_b256, hex_to_u64};
+use mordor::{SlotSynchronizer, DEFAULT_GENESIS_TIMESTAMP};
 
 #[derive(Debug, Default, Clone)]
 pub struct FinalityUpdate {
@@ -21,16 +21,6 @@ pub struct SyncAggregate {
     pub sync_committee_signature: B256,
 }
 
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct Beacon {
-    pub slot: U64,
-    pub proposer_index: U64,
-    pub parent_root: B256,
-    pub state_root: B256,
-    pub body_root: B256,
-}
-
 impl<'a> FinalityUpdate {
     pub fn parse(input: &'a [u8]) -> Option<Self> {
         if memchr::memmem::find(input, b"\"code\":").is_some() {
@@ -43,25 +33,45 @@ impl<'a> FinalityUpdate {
         }
 
         let version = find_field(input, b"\"version\":\"", b"\"")?;
-  
+
         let signature_key = find_field(input, b"\"signature_slot\":\"", b"\"")?;
 
         let finalized_header = find_field(input, b"\"finalized_header\":\"", b"}")?;
         let attested_header = find_field(input, b"\"attested_header\":\"", b"}")?;
         let sync_committee_bits = find_field(input, b"\"sync_committee_bits\":\"", b"\"")?;
-        let sync_committee_signatures = find_field(input, b"\"sync_committee_signatures\":\"", b"\"")?;
-
+        let sync_committee_signatures =
+            find_field(input, b"\"sync_committee_signatures\":\"", b"\"")?;
 
         let finality_branch: Vec<B256> = Self::finality_branch(input)?
             .iter()
             .map(|&(start, end)| hex_to_b256(&input[start..end]))
             .collect();
 
-        let slot_f = find_field(&input[finalized_header.0..finalized_header.1], b"\"slot\":\"", b"\"")?;
-        let proposer_index_f = find_field(&input[finalized_header.0..finalized_header.1], b"\"proposer_index\":\"", b"\"")?;
-        let parent_root_f = find_field(&input[finalized_header.0..finalized_header.1], b"\"parent_root\":\"", b"\"")?;
-        let state_root_f = find_field(&input[finalized_header.0..finalized_header.1], b"\"state_root\":\"", b"\"")?;
-        let body_root_f = find_field(&input[finalized_header.0..finalized_header.1], b"\"body_root\":\"", b"\"")?;
+        let slot_f = find_field(
+            &input[finalized_header.0..finalized_header.1],
+            b"\"slot\":\"",
+            b"\"",
+        )?;
+        let proposer_index_f = find_field(
+            &input[finalized_header.0..finalized_header.1],
+            b"\"proposer_index\":\"",
+            b"\"",
+        )?;
+        let parent_root_f = find_field(
+            &input[finalized_header.0..finalized_header.1],
+            b"\"parent_root\":\"",
+            b"\"",
+        )?;
+        let state_root_f = find_field(
+            &input[finalized_header.0..finalized_header.1],
+            b"\"state_root\":\"",
+            b"\"",
+        )?;
+        let body_root_f = find_field(
+            &input[finalized_header.0..finalized_header.1],
+            b"\"body_root\":\"",
+            b"\"",
+        )?;
 
         let beacon_f = Beacon {
             slot: hex_to_u64(&input[slot_f.0..slot_f.1]),
@@ -71,11 +81,31 @@ impl<'a> FinalityUpdate {
             body_root: hex_to_b256(&input[body_root_f.0..body_root_f.1]),
         };
 
-        let slot_a = find_field(&input[attested_header.0..attested_header.1], b"\"slot\":\"", b"\"")?;
-        let proposer_index_a = find_field(&input[attested_header.0..attested_header.1], b"\"proposer_index\":\"", b"\"")?;
-        let parent_root_a = find_field(&input[attested_header.0..attested_header.1], b"\"parent_root\":\"", b"\"")?;
-        let state_root_a = find_field(&input[attested_header.0..attested_header.1], b"\"state_root\":\"", b"\"")?;
-        let body_root_a = find_field(&input[attested_header.0..attested_header.1], b"\"body_root\":\"", b"\"")?;
+        let slot_a = find_field(
+            &input[attested_header.0..attested_header.1],
+            b"\"slot\":\"",
+            b"\"",
+        )?;
+        let proposer_index_a = find_field(
+            &input[attested_header.0..attested_header.1],
+            b"\"proposer_index\":\"",
+            b"\"",
+        )?;
+        let parent_root_a = find_field(
+            &input[attested_header.0..attested_header.1],
+            b"\"parent_root\":\"",
+            b"\"",
+        )?;
+        let state_root_a = find_field(
+            &input[attested_header.0..attested_header.1],
+            b"\"state_root\":\"",
+            b"\"",
+        )?;
+        let body_root_a = find_field(
+            &input[attested_header.0..attested_header.1],
+            b"\"body_root\":\"",
+            b"\"",
+        )?;
 
         let beacon_a = Beacon {
             slot: hex_to_u64(&input[slot_a.0..slot_a.1]),
@@ -87,17 +117,20 @@ impl<'a> FinalityUpdate {
 
         let sync_aggregate = SyncAggregate {
             sync_committee_bits: hex_to_u64(&input[sync_committee_bits.0..sync_committee_bits.1]),
-            sync_committee_signature: hex_to_b256(&input[sync_committee_signatures.0..sync_committee_signatures.1]),
+            sync_committee_signature: hex_to_b256(
+                &input[sync_committee_signatures.0..sync_committee_signatures.1],
+            ),
         };
 
-
         Some(FinalityUpdate {
-            version: std::str::from_utf8(&input[version.0..version.1]).ok()?.to_string(),
+            version: std::str::from_utf8(&input[version.0..version.1])
+                .ok()?
+                .to_string(),
             attested_header: beacon_a,
             finalized_header: beacon_f,
             finality_branch,
             sync_aggregate: sync_aggregate,
-            signature_slot:  hex_to_u64(&input[signature_key.0..signature_key.1]),
+            signature_slot: hex_to_u64(&input[signature_key.0..signature_key.1]),
             code: None,
         })
     }
@@ -126,6 +159,4 @@ impl<'a> FinalityUpdate {
 
         Some(result)
     }
-
-
 }

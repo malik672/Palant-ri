@@ -1,12 +1,15 @@
 use alloy_primitives::{B256, U64};
 
-use crate::{find_field, hex_to_b256};
+use crate::{
+    find_field, hex_to_b256,
+    types::{Beacon, SyncCommittee},
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct LightClientBootstrap {
     pub version: String,
     pub header: Header,
-    pub current_sync_committee: CurrentSyncCommittee,
+    pub current_sync_committee: SyncCommittee,
     pub current_sync_committee_branch: Vec<B256>,
     pub code: Option<u16>,
 }
@@ -14,21 +17,6 @@ pub struct LightClientBootstrap {
 #[derive(Debug, Default, Clone)]
 pub struct Header {
     pub beacon: Beacon,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct Beacon {
-    pub slot: U64,
-    pub proposer_index: U64,
-    pub parent_root: B256,
-    pub state_root: B256,
-    pub body_root: B256,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct CurrentSyncCommittee {
-    pub pub_keys: Vec<B256>,
-    pub aggregate_pubkey: B256,
 }
 
 impl LightClientBootstrap {
@@ -64,7 +52,7 @@ impl LightClientBootstrap {
             body_root: hex_to_b256(&input[body_root.0..body_root.1]),
         };
 
-        let current_sync_committee = CurrentSyncCommittee {
+        let current_sync_committee = SyncCommittee {
             pub_keys: Self::parse_pub_keys_array(input)?
                 .iter()
                 .map(|&(start, end)| hex_to_b256(&input[start..end]))
@@ -80,7 +68,9 @@ impl LightClientBootstrap {
         let header = Header { beacon };
 
         Some(LightClientBootstrap {
-            version: std::str::from_utf8(&input[version.0..version.1]).ok()?.to_string(),
+            version: std::str::from_utf8(&input[version.0..version.1])
+                .ok()?
+                .to_string(),
             header,
             current_sync_committee,
             current_sync_committee_branch,

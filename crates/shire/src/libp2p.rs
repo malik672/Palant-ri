@@ -118,7 +118,10 @@ impl LightClient {
         Ok(Self { swarm })
     }
 
-    pub async fn start(&mut self, mut shutdown_rx: oneshot::Receiver<()>) -> Result<(), Box<dyn Error>> {
+    pub async fn start(
+        &mut self,
+        mut shutdown_rx: oneshot::Receiver<()>,
+    ) -> Result<(), Box<dyn Error>> {
         loop {
             tokio::select! {
                 event = self.swarm.select_next_some() => {
@@ -178,7 +181,7 @@ mod tests {
         // Store peer IDs before moving clients
         let client1_id = client1.swarm.local_peer_id().clone();
         let client2_id = client2.swarm.local_peer_id().clone();
-        
+
         // Create broadcast channel for shutdown signal
         let (shutdown_tx, _) = broadcast::channel::<()>(1);
         let mut shutdown_rx1 = shutdown_tx.subscribe();
@@ -194,9 +197,9 @@ mod tests {
                 tokio::select! {
                     event = client1.swarm.select_next_some() => {
                         if let SwarmEvent::Behaviour(LightClientEvent::Kademlia(
-              
+
                             kad::Event::RoutingUpdated { peer, .. }
-                             
+
                         )) = event {
                             let _ = peers_tx1.send(peer).await;
                         }
@@ -206,7 +209,6 @@ mod tests {
                 }
             }
         });
-
 
         let client2_handle = tokio::spawn(async move {
             loop {
@@ -226,7 +228,7 @@ mod tests {
         // Wait for peer discovery
         let mut client1_found = false;
         let mut client2_found = false;
-        
+
         tokio::select! {
             _ = async {
                 while let Some(peer) = peers_rx1.recv().await {
@@ -254,7 +256,10 @@ mod tests {
 
         println!("Client 1 found client 2: {}", client1_found);
 
-        assert!(client1_found && client2_found, "Peers should have discovered each other");
+        assert!(
+            client1_found && client2_found,
+            "Peers should have discovered each other"
+        );
         Ok(())
     }
 }

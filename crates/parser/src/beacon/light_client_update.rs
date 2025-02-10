@@ -1,14 +1,16 @@
 use alloy_primitives::{B256, U64};
 
-use crate::{find_field, hex_to_b256, hex_to_u64};
+use crate::{
+    find_field, hex_to_b256, hex_to_u64,
+    types::{Beacon, SyncCommittee},
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct Updates {
     pub version: String,
     pub attested_header: Beacon,
-    pub pubkeys: Vec<B256>,
-    pub aggregate_pubkey: B256,
     pub next_sync_committee_branch: Vec<B256>,
+    pub next_sync_committee: SyncCommittee,
     pub finalized_header: Beacon,
     pub finality_branch: Vec<B256>,
     pub sync_aggregate: SyncAggregate,
@@ -20,15 +22,6 @@ pub struct Updates {
 pub struct SyncAggregate {
     pub sync_committee_bits: U64,
     pub sync_committee_signature: B256,
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct Beacon {
-    pub slot: U64,
-    pub proposer_index: U64,
-    pub parent_root: B256,
-    pub state_root: B256,
-    pub body_root: B256,
 }
 
 impl<'a> Updates {
@@ -143,6 +136,11 @@ impl<'a> Updates {
             ),
         };
 
+        let next_sync_committee = SyncCommittee {
+            pub_keys: pubkeys,
+            aggregate_pubkey: hex_to_b256(&input[aggregate_pub_key.0..aggregate_pub_key.1]),
+        };
+
         Some(Updates {
             version: std::str::from_utf8(&input[version.0..version.1])
                 .ok()?
@@ -152,8 +150,7 @@ impl<'a> Updates {
             finality_branch,
             sync_aggregate,
             signature_slot: hex_to_u64(&input[signature_key.0..signature_key.1]),
-            pubkeys,
-            aggregate_pubkey: hex_to_b256(&input[aggregate_pub_key.0..aggregate_pub_key.1]),
+            next_sync_committee,
             next_sync_committee_branch,
             code: None,
         })
