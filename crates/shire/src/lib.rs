@@ -1,5 +1,6 @@
 #![feature(trivial_bounds)]
 
+pub mod checkpoint;
 pub mod concensus;
 pub mod libp2p;
 pub mod light_client;

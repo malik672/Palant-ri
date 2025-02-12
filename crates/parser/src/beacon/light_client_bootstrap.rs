@@ -21,14 +21,15 @@ pub struct Header {
 
 impl LightClientBootstrap {
     pub fn parse(input: &[u8]) -> Option<Self> {
-        if memchr::memmem::find(input, b"\"code\":").is_some() {
-            let code = find_field(input, b"\"code\":", b",")?;
+        if let Some(_pos) = memchr::memmem::find(input, b"\"code\":") {
+            let code = find_field(input, b"\"code\":", b"}")?;
             let code_str = std::str::from_utf8(&input[code.0..code.1]).ok()?;
             return Some(Self {
                 code: Some(code_str.parse().ok()?),
                 ..Default::default()
             });
         }
+
 
         let version = find_field(input, b"\"version\":\"", b"\"")?;
         let slot = find_field(input, b"\"slot\":\"", b"\"")?;

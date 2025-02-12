@@ -32,6 +32,8 @@ pub struct LightClientStore {
 
 /// Manages the synchronization process for a light client by coordinating updates
 /// and maintaining the client state
+
+#[derive(Debug, Default, Clone)]
 pub struct LightClientSyncer {
     pub client: LightClient,
     pub slot_sync: SlotSynchronizer,
@@ -41,6 +43,8 @@ pub struct LightClientSyncer {
 /// A light client implementation for interacting with Ethereum beacon chain endpoints.
 /// This client supports concurrent querying of multiple endpoints for redundancy and
 /// consensus verification.
+
+#[derive(Debug, Default, Clone)]
 pub struct LightClient {
     pub endpoints: Vec<String>,
     pub client: Client,
@@ -190,6 +194,7 @@ impl LightClientSyncer {
         Ok(responses[0].1.clone())
     }
 
+    /// SIGNICANT ISSUE: WRONG RETURN TYPE
     /// Retrieves the latest optimistic update from the beacon chain.
     ///
     /// Similar to finality update but for optimistic sync data.
@@ -316,5 +321,18 @@ impl LightClientSyncer {
                 .map_err(|_| ConsensusError::Parse)?;
             tokio::time::sleep(wait_time).await;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_sync() {
+        let a = LightClientSyncer::new(vec!["https://eth-beacon-chain.drpc.org/rest/".to_string()]);
+        // println!("{:?}", a.get_latest_finality_update().await);
+        println!("{:?}", a.get_latest_update(1, 1).await);
+        // println!("{:?}", a.get_optimistic_update().await);
     }
 }

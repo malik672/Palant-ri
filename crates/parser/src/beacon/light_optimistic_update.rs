@@ -1,6 +1,6 @@
 use alloy_primitives::{B256, U64};
 
-use crate::{find_field, hex_to_b256, hex_to_u64, types::Beacon};
+use crate::{find_field, hex_to_b256,  types::Beacon};
 
 #[derive(Debug, Default, Clone)]
 pub struct LightOptimisticUpdate {
@@ -13,20 +13,21 @@ pub struct LightOptimisticUpdate {
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct SyncAggregate {
-    pub sync_committee_bits: U64,
+    pub sync_committee_bits: B256,
     pub sync_committee_signature: B256,
 }
 
 impl LightOptimisticUpdate {
     pub fn parse(input: &[u8]) -> Option<Self> {
-        if memchr::memmem::find(input, b"\"code\":").is_some() {
-            let code = find_field(input, b"\"code\":", b",")?;
+        if let Some(_pos) = memchr::memmem::find(input, b"\"code\":") {
+            let code = find_field(input, b"\"code\":", b"}")?;
             let code_str = std::str::from_utf8(&input[code.0..code.1]).ok()?;
             return Some(Self {
                 code: Some(code_str.parse().ok()?),
                 ..Default::default()
             });
         }
+
 
         let version = find_field(input, b"\"version\":\"", b"\"")?;
         let slot = find_field(input, b"\"slot\":\"", b"\"")?;
@@ -36,10 +37,10 @@ impl LightOptimisticUpdate {
         let body_root = find_field(input, b"\"body_root\":\"", b"\"")?;
         let sync_committee_bits = find_field(input, b"\"sync_committee_bits\":\"", b"\"")?;
         let sync_committee_signatures =
-            find_field(input, b"\"sync_committee_signatures\":\"", b"\"")?;
+            find_field(input, b"\"sync_committee_signature\":\"", b"\"")?;
 
         let sync_aggregate = SyncAggregate {
-            sync_committee_bits: hex_to_u64(&input[sync_committee_bits.0..sync_committee_bits.1]),
+            sync_committee_bits: hex_to_b256(&input[sync_committee_bits.0..sync_committee_bits.1]),
             sync_committee_signature: hex_to_b256(
                 &input[sync_committee_signatures.0..sync_committee_signatures.1],
             ),
@@ -67,7 +68,7 @@ impl LightOptimisticUpdate {
                 .to_string(),
             attested_header: beacon,
             sync_aggregate,
-            signature_slot: hex_to_u64(&input[signature_slot.0..signature_slot.1]),
+            signature_slot: std::str::from_utf8(&input[signature_slot.0..signature_slot.1]).unwrap().parse().unwrap(),
             code: None,
         })
     }
