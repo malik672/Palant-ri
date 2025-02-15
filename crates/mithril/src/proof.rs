@@ -5,6 +5,8 @@ use tree_hash::TreeHash;
 use digest::Digest;
 
 
+/// THIS CODE WAS TAKEN FROM THE HELIOS LIGHT CLIENT
+
 
 pub fn is_finality_proof_valid(
     attested_header: &Beacon,
