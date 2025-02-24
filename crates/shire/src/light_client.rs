@@ -253,8 +253,6 @@ impl LightClientSyncer {
         trusted_block_root: B256,
     ) -> Result<(), ConsensusError> {
         let bootstrap = self.get_bootstrap(trusted_block_root).await?;
-    
-
         self.store = Some(LightClientStore {
             finalized_header: bootstrap.header.beacon.clone(),
             optimistic_header: bootstrap.header.beacon.clone(),

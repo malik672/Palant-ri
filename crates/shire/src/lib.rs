@@ -1,5 +1,6 @@
 #![feature(trivial_bounds)]
 
+
 use serde::{Deserialize, Serialize};
 
 pub mod checkpoint;
