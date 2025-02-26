@@ -1,4 +1,5 @@
 
+
 [workspace]
 members = [ "crates/cli", "crates/palantiri",
     "crates/palantiri"
@@ -34,4 +35,5 @@ tree_hash_derive = { git = "https://github.com/malik672/tree_hash_s" }
 eyre = "0.6.12"
 retri = "0.1.0"
 serde_yaml = "0.9.34"
+
 
