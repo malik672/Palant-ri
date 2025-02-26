@@ -1,6 +1,5 @@
 use alloy::primitives::B256;
 use eyre::Error;
-use palantiri::RpcError;
 use reqwest::{Client, ClientBuilder};
 use retri::{retry, BackoffSettings};
 use serde::{Deserialize, Serialize};
